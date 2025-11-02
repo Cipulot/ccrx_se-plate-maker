@@ -120,7 +120,8 @@
                     filename += ".dxf";
 
                     var fileUrl = 'https://raw.githubusercontent.com/Cipulot/ccrx_se-plate-maker/refs/heads/main/Plate_Indexed_Name/' + boardValue + '_Plate_Indexed_Name/' + filename;
-                    var licenseUrl = 'https://raw.githubusercontent.com/Cipulot/ccrx_se-plate-maker/refs/heads/main/LICENSE';
+                    // Use the canonical raw.githubusercontent URL format: /<owner>/<repo>/<branch>/<path>
+                    var licenseUrl = 'https://raw.githubusercontent.com/Cipulot/ccrx_se-plate-maker/main/LICENSE';
 
                     fetch(fileUrl)
                         .then(response => response.arrayBuffer())
@@ -137,10 +138,18 @@
 
                                     var additionalFiles = [];
 
-                                    additionalFiles.push('https://raw.githubusercontent.com/Cipulot/ccrx_se-plate-maker/refs/heads/main/simple_tapped.png?raw=true');
+                                    // Use the branch name (main) directly and avoid mixing GitHub web query params with raw.githubusercontent URLs
+                                    additionalFiles.push('https://raw.githubusercontent.com/Cipulot/ccrx_se-plate-maker/main/simple_tapped.png');
 
                                     // Fetch and add all additional files to the zip
-                                    Promise.all(additionalFiles.map(fileUrl => fetch(fileUrl).then(response => response.arrayBuffer())))
+                                    console.log('Fetching additional files:', additionalFiles);
+                                    Promise.all(additionalFiles.map(fileUrl => {
+                                        console.log('Requesting:', fileUrl);
+                                        return fetch(fileUrl).then(response => {
+                                            if (!response.ok) throw new Error('Failed to fetch additional file: ' + response.status + ' ' + fileUrl);
+                                            return response.arrayBuffer();
+                                        });
+                                    }))
                                         .then(fileBufferArray => {
                                             additionalFiles.forEach((fileUrl, index) => {
                                                 var fileName = fileUrl.split('/').pop().split('?')[0]; // Extract filename from URL
